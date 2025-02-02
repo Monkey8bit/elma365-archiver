@@ -27,3 +27,15 @@ services:
     volumes:
       - ./compose_conf/postgres:/var/lib/postgresql/data
       - ./build/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+  minio:
+    image: minio/minio:${MINIO_IMAGE_TAG}
+    ports:
+      - 9000:9000
+      - 9001:9001
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - ./compose_conf/minio:/data
+    command: server --address ":9000" --console-address ":9001" /data
