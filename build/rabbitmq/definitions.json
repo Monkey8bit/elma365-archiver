@@ -1,0 +1,46 @@
+{
+    "queues": [
+        {
+            "name": "archiver",
+            "durable": true,
+            "auto_delete": false,
+            "arguments":{},
+            "vhost": "/"
+        },
+        {
+            "name": "mailer",
+            "durable": true,
+            "auto_delete": false,
+            "arguments":{},
+            "vhost": "/"
+        }
+    ],
+    "exchanges": [
+        {
+            "name": "elma365-archiver",
+            "type": "direct",
+            "durable": true,
+            "auto_delete": false,
+            "arguments":{},
+            "vhost": "/"
+        }
+    ],
+    "bindings": [
+        {
+            "source": "elma365-archiver",
+            "vhost": "/",
+            "destination": "archiver",
+            "destination_type": "queue",
+            "routing_key": "archiver",
+            "arguments":{}
+        },
+        {
+            "source": "elma365-archiver",
+            "vhost": "/",
+            "destination": "mailer",
+            "destination_type": "queue",
+            "routing_key": "mailer",
+            "arguments":{}
+        }
+    ]
+}

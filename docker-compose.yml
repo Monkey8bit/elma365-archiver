@@ -1,0 +1,18 @@
+services:
+  rabbitmq:
+    image: rabbitmq:${RABBIT_IMAGE_TAG}
+    ports:
+      - 15672:15672
+      - 5672:5672
+    hostname: rabbitmq
+    restart: always
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFINITIONS_FILE: ${RABBITMQ_DEFINITIONS_FILE}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbit disk_free_limit 1073741824
+    volumes:
+      - ./compose_conf/rabbitmq:/var/lib/rabbitmq
+      - ${RABBITMQ_DEFINITIONS_FILE}:/opt/definitions.json
+      - ./build/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
