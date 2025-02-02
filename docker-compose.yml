@@ -15,3 +15,15 @@ services:
       - ./compose_conf/rabbitmq:/var/lib/rabbitmq
       - ${RABBITMQ_DEFINITIONS_FILE}:/opt/definitions.json
       - ./build/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+  postgres:
+    image: postgres:${POSTGRES_IMAGE_TAG}
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./compose_conf/postgres:/var/lib/postgresql/data
+      - ./build/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
