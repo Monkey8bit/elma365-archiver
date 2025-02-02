@@ -10,7 +10,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_DEFINITIONS_FILE: ${RABBITMQ_DEFINITIONS_FILE}
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbit disk_free_limit 1073741824
     volumes:
       - ./compose_conf/rabbitmq:/var/lib/rabbitmq
