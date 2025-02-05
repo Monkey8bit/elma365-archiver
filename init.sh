@@ -1,1 +1,1 @@
-docker compose --env-file public.env --env-file secrets.env up
+docker compose up --build
