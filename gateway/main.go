@@ -10,7 +10,6 @@ import (
 )
 
 func init() {
-	log.Println(filepath.Join("/app", ".env"))
 	if err := godotenv.Load(filepath.Join("/app", ".env")); err != nil {
 		log.Print("No .env file found")
 	}
