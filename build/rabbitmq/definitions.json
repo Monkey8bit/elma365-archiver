@@ -42,5 +42,31 @@
             "routing_key": "mailer",
             "arguments":{}
         }
+    ],
+    "vhosts": [
+        {
+            "name": "/",
+            "tracing": false,
+            "enabled": true
+        }
+    ],
+    "users": [
+        {
+            "name": "deconstruct",
+            "password_hash": "5nIbmXJuUWtwxXD5JHk1Ad2zCw5bDt25o3qhrFcBM2sdWWik",
+            "tags": "administrator",
+            "vhosts": [
+                "/"
+            ]
+        }
+    ],
+    "permissions": [
+        {
+            "user": "deconstruct",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
     ]
 }

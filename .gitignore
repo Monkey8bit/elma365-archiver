@@ -1,6 +1,4 @@
 **/*.env
 node_modules
 compose_conf
-
-/archiver 
-#for clean commit
+dist

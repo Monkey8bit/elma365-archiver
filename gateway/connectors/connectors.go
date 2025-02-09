@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -164,9 +165,16 @@ func (c *RabbitMQConnector) PublishFilesIds(ctx context.Context, filesIds []int)
 
 	body, err := json.Marshal(RabbitMQMessage{FilesIds: filesIds})
 
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	archiverQueueName := os.Getenv("RABBITMQ_ARCHIVER_QUEUE")
+
 	err = ch.Publish(
 		"",
-		"archiver",
+		archiverQueueName,
 		false,
 		false,
 		amqp091.Publishing{

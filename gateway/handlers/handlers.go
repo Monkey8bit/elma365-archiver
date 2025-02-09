@@ -28,8 +28,6 @@ type FileValidationMeta struct {
 const filesBucketName = "files"
 
 func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
-	accessKey := os.Getenv("MINIO_ROOT_USER")
-	secretKey := os.Getenv("MINIO_ROOT_PASSWORD")
 
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method != http.MethodPost {
@@ -52,7 +50,9 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	connector, err := connectors.CreateMinioConnector("minio:9000", accessKey, secretKey)
+	accessKey, secretKey, minioHost, minioPort := os.Getenv("MINIO_ROOT_USER"), os.Getenv("MINIO_ROOT_PASSWORD"), os.Getenv("MINIO_HOST"), os.Getenv("MINIO_PORT")
+
+	connector, err := connectors.CreateMinioConnector(fmt.Sprintf("%s:%s", minioHost, minioPort), accessKey, secretKey)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(Response{Message: "Unable to create connector", Status: http.StatusInternalServerError})

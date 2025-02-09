@@ -30,15 +30,15 @@ services:
   minio:
     image: minio/minio:latest
     ports:
-      - 9000:9000
-      - 9001:9001
+      - ${MINIO_PORT}:${MINIO_PORT}
+      - ${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}
     restart: always
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - ./compose_conf/minio:/data
-    command: server --address ":9000" --console-address ":9001" /data
+    command: server --address ":${MINIO_PORT}" --console-address ":${MINIO_CONSOLE_PORT}" /data
   gateway:
     build:
       context: ./gateway
@@ -47,6 +47,30 @@ services:
       - 8080:8080
     depends_on:
       - minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_HOST=${MINIO_HOST}
+      - MINIO_PORT=${MINIO_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_ARCHIVER_QUEUE=${RABBITMQ_ARCHIVER_QUEUE}
+    restart: always
+  archiver:
+    build:
+      context: ./archiver
+      dockerfile: Dockerfile
+    depends_on:
+      - minio
+      - rabbitmq
+      - postgres
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
@@ -59,6 +83,7 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
       - RABBITMQ_HOST=${RABBITMQ_HOST}
       - RABBITMQ_PORT=${RABBITMQ_PORT}
+    restart: always
   bucket_builder:
     build:
       context: ./build/minio
