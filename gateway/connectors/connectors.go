@@ -118,15 +118,15 @@ func (c *PostgresConnector) InsertFile(ctx context.Context, fileMeta FileMeta) (
 	var err error
 	var fileId int
 
-	err = c.Client.QueryRow(ctx, "SELECT id FROM files WHERE s3_tag = $1", fileMeta.MinioTag).Scan(&fileId)
+	err = c.Client.QueryRow(ctx, "SELECT id FROM files WHERE s3_tag = $1 AND name = $2", fileMeta.MinioTag, fileMeta.FileName).Scan(&fileId)
 
-	if err != pgx.ErrNoRows {
+	if err != nil && err != pgx.ErrNoRows {
 		log.Println(err)
 		return fileId, err
 	}
 
 	if fileId != 0 {
-		log.Printf("File %s already exists\n", fileMeta.FileName)
+		log.Printf("File %s with id %d already exists\n", fileMeta.FileName, fileId)
 		return fileId, nil
 	}
 
@@ -142,8 +142,6 @@ func (c *PostgresConnector) InsertFile(ctx context.Context, fileMeta FileMeta) (
 
 func CreateRabbitMQConnector(connString string) (*RabbitMQConnector, error) {
 	conn, err := amqp091.Dial(connString)
-
-	log.Print(connString)
 
 	if err != nil {
 		log.Print("Unable to connect to RabbitMQ")

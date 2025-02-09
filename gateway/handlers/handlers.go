@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	// "log"
 	"mime/multipart"
 	"net/http"
@@ -77,7 +78,6 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	postgresUser, postgresPassword, postgresHost, postgresPort, postgresDb := os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_DB")
-
 	postgresConnector, err := connectors.CreatePostgresConnector(fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", postgresUser, postgresPassword, postgresHost, postgresPort, postgresDb))
 
 	if err != nil {
@@ -103,7 +103,6 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	filesIds := []int{}
 
 	for _, file := range filesForInsert {
-		fmt.Println(file)
 		fileId, err := postgresConnector.InsertFile(context.Background(), connectors.FileMeta{FileName: file.FileName, MinioTag: file.FileTag, UserId: userId})
 
 		if err != nil {
