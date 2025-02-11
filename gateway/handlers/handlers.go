@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	// "log"
 	"mime/multipart"
 	"net/http"
 	"os"

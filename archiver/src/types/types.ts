@@ -1,11 +1,13 @@
 type ArchiverQueueItem = {
-    filesIds: number[]
-}
+    FilesIds: number[]
+};
 
 type PostgresqlFilesSelectResponse = {
-    s3_tags: string[]
+    fileNames: string[]
 }
 
 interface ServiceConnector {
     selectFiles(filesIds: number[]):  Promise<PostgresqlFilesSelectResponse>
 }
+
+export { ArchiverQueueItem, PostgresqlFilesSelectResponse, ServiceConnector };
