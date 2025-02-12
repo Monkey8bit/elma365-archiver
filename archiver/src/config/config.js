@@ -17,5 +17,7 @@ export const MINIO = {
     HOST: process.env.MINIO_HOST || 'localhost',
     PORT: process.env.MINIO_PORT || 9000,
     ACCESS_KEY: process.env.MINIO_ROOT_USER || 'minioadmin',
-    SECRET_KEY: process.env.MINIO_ROOT_PASSWORD || 'minioadmin'
+    SECRET_KEY: process.env.MINIO_ROOT_PASSWORD || 'minioadmin',
+    FILES_BUCKET: process.env.MINIO_FILES_BUCKET || 'files',
+    ARCHIVES_BUCKET: process.env.MINIO_ARCHIVES_BUCKET || 'archives'
 };

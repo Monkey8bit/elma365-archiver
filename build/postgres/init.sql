@@ -8,6 +8,7 @@ CREATE TABLE files (
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     s3_tag VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    unique_name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -16,6 +17,7 @@ CREATE TABLE archives (
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     s3_tag VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    unique_name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

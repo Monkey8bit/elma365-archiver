@@ -18,12 +18,13 @@ type Response struct {
 }
 
 type FileValidationMeta struct {
-	FileTag  string
-	Status   bool
-	FileName string
+	FileTag    string
+	Status     bool
+	FileName   string
+	UniqueName string
 }
 
-const filesBucketName = "files"
+var filesBucketName = os.Getenv("MINIO_FILES_BUCKET")
 
 func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -101,7 +102,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	filesIds := []int{}
 
 	for _, file := range filesForInsert {
-		fileId, err := postgresConnector.InsertFile(context.Background(), connectors.FileMeta{FileName: file.FileName, MinioTag: file.FileTag, UserId: userId})
+		fileId, err := postgresConnector.InsertFile(context.Background(), connectors.FileMeta{FileName: file.FileName, MinioTag: file.FileTag, UserId: userId, UniqueName: file.UniqueName})
 
 		if err != nil {
 			json.NewEncoder(w).Encode(Response{Message: "Unable to insert file", Status: http.StatusInternalServerError})
@@ -134,7 +135,7 @@ func serializeFile(file multipart.File, fileName string, fileSize int64, wg *syn
 	defer file.Close()
 	defer wg.Done()
 
-	fileTag, err := connector.UploadFile(context.Background(), filesBucketName, file, fileName, fileSize, "application/octet-stream")
+	fileTag, uniqueName, err := connector.UploadFile(context.Background(), filesBucketName, file, fileName, fileSize, "application/octet-stream")
 
 	if err != nil {
 		ch <- FileValidationMeta{FileName: fileName, FileTag: "", Status: false}
@@ -142,5 +143,5 @@ func serializeFile(file multipart.File, fileName string, fileSize int64, wg *syn
 		return
 	}
 
-	ch <- FileValidationMeta{FileName: fileName, FileTag: fileTag, Status: true}
+	ch <- FileValidationMeta{FileName: fileName, FileTag: fileTag, Status: true, UniqueName: uniqueName}
 }

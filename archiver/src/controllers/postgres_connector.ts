@@ -15,9 +15,7 @@ class PostgresConnector {
     };
 
     async selectFiles(filesIds: number[]) {
-        console.log({filesIds});
-        const fileNames = await this.query(`SELECT name FROM files WHERE id IN (${filesIds.join(",")})`);
-        console.log(fileNames);
+        const fileNames = await this.query(`SELECT name, unique_name FROM files WHERE id IN (${filesIds.join(",")})`);
     };
 
     private async query(query: string) {

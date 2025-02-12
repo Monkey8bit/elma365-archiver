@@ -1,12 +1,13 @@
 import amqp from 'amqplib/callback_api';
 
 import * as CONFIG from './src/config/config.js';
-import { minioConnector } from './src/controllers/minio_controller.js';
+import { MinioConnector } from './src/controllers/minio_controller.js';
 import { postgresConnector } from './src/controllers/postgres_connector.js';
 import { ArchiverQueueItem } from './src/types/types.js';
 
 (async () => {
     const rabbitMqConnectionUrl = `amqp://${CONFIG.RABBITMQ.USER}:${CONFIG.RABBITMQ.PASSWORD}@${CONFIG.RABBITMQ.HOST}:${CONFIG.RABBITMQ.PORT}`;
+    const minioConnector = new MinioConnector();
     
     amqp.connect(rabbitMqConnectionUrl, (err: Error | null, connection: amqp.Connection) => {
         if (err) {
