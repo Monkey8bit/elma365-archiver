@@ -1,13 +1,12 @@
 import { Client } from "minio";
-import * as CONFIG from "../config/config.js"
-import { MinioObjectCacheItem } from "../types/types";
-import { BucketItemStat } from "minio";
+import * as CONFIG from "../config/config.js";
+import { MinioObjectMeta } from "../types/types";
+import crypto from "crypto";
 
 const CHUNK_SIZE = 1000;
 
 class MinioConnector {
     private client: Client;
-    private cache: MinioObjectCacheItem[] = [];
 
     constructor() {
         console.log("Minio connector init");
@@ -19,67 +18,58 @@ class MinioConnector {
             secretKey: CONFIG.MINIO.SECRET_KEY,
             useSSL: false
         });
-        this.listObjects(CONFIG.MINIO.FILES_BUCKET).then(() => {
-            console.log(`Minio cache init, ${this.cache.length} objects cached: ${JSON.stringify(this.cache)}`);
-        });
     };
 
-    private async getObjMeta(fileName: string, obj: BucketItemStat) {
-        return {
-            fileName,
-            uniqueName: obj.metaData['unique_name']
-        };
-    };
-
-    private async listObjects(bucketName: string) {
-        const stream = this.client.listObjectsV2(bucketName, '', true);
-        let chunk: Promise<MinioObjectCacheItem>[] = [];
-
-        for await (let obj of stream) {
-            chunk.push(this.client.statObject(bucketName, obj.name).then(stat => {
-                return this.getObjMeta(obj.name, stat);
-            }));
-
-            if (chunk.length >= CHUNK_SIZE) {
-                this.cache.push(...await Promise.all(chunk));
-                chunk = [];
-            };
+    private async getFile(bucketName: string, fileName: string): Promise<MinioObjectMeta | undefined> {
+        function isMinioError(error: unknown): error is {code: string, message: string} {
+            return !!error && typeof error === "object" && "code" in error;
         };
 
-        this.cache.push(...await Promise.all(chunk));
-    };
-
-    private async getFile(bucketName: string, fileName: string) {
-        return this.client.getObject(bucketName, fileName).then(res => {
-            return {
-                fileName,
-                buffer: res
+        try {
+            const objStat = await this.client.statObject(bucketName, fileName);
+            
+            return this.client.getObject(bucketName, fileName).then(res => {
+                return {
+                    uniqueName: fileName,
+                    buffer: res,
+                    fileName: objStat.metaData["file_name"],
+                };
+            }).catch(err => {
+                console.error(`Error getting file ${fileName} from minio: ${err.message}`);
+                return undefined;
+            });
+        } catch (err: unknown) {
+            if (isMinioError(err) && err.code === "NotFound") {
+                console.error(`File with name ${fileName} doesn't exists`);
+                return;
+            } else {
+                console.log(err)
             };
-        }).catch(err => {
-            return {
-                fileName,
-                buffer: null,
-                error: err.message
-            }
-        });
+        };
     };
 
     async getFiles(bucketName: string, minioFilesNames: string[]) {
-        this.client.listObjectsV2
-        const files = await Promise.all(minioFilesNames.map(fileName => this.getFile(bucketName, fileName)));
-
-        files.filter(file => file.buffer === null).forEach(file => {
-            console.error(`Error while fetching file ${file.fileName}: ${file.error}`);
-        });
-
-        return files.filter(file => file.buffer !== null);
+        const files = await Promise.all(minioFilesNames.map(fileName => this.getFile(bucketName, fileName))).then(data => data.filter(Boolean));
+        console.log({files})
+        return files.filter(file => file!.buffer !== null);
     };
+    
+    async uploadFile(bucketName: string, name: string, fileBuffer: Buffer): Promise<string | undefined> {
+        const fileNameArr = name.split(".");
+        let uniqueName = "";
 
-    async uploadFile(bucketName: string, fileName: string, fileBuffer: Buffer) {
-        return this.client.putObject(bucketName, fileName, fileBuffer).then(res => {
+        if (fileNameArr.length > 1) {
+            const [fileName, fileExtention] = [fileNameArr.slice(0, fileNameArr.length - 1), fileNameArr[fileNameArr.length - 1]];
+            uniqueName = `${fileName}.${fileExtention}`;
+        } else {
+            uniqueName = name;
+        };
+
+        return this.client.putObject(bucketName, uniqueName, fileBuffer, fileBuffer.length, {file_name: name}).then(res => {
             return res.etag;
         }).catch(err => {
-            throw new Error(err.message);
+            console.error(err);
+            return undefined;
         });
     };
 };

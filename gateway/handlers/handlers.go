@@ -121,7 +121,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = rabbitmqConnector.PublishFilesIds(context.Background(), filesIds)
+	err = rabbitmqConnector.PublishFilesIds(context.Background(), filesIds, mail, userId)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(Response{Message: "Unable to publish files ids", Status: http.StatusInternalServerError})

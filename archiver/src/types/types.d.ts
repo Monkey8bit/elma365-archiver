@@ -1,18 +1,36 @@
+import { Readable } from "node:stream"
+
 type ArchiverQueueItem = {
-    FilesIds: number[]
+    FilesIds: number[],
+    UserEmail: string,
+    UserId: number
 };
 
 type PostgresqlFilesSelectResponse = {
     fileNames: string[]
-}
+};
 
-type MinioObjectCacheItem = {
+type PostgresInsertMeta = {
+    userId: number,
+    fileTag: string,
     fileName: string,
     uniqueName: string
-}
+};
 
-interface ServiceConnector {
-    selectFiles(filesIds: number[]):  Promise<PostgresqlFilesSelectResponse>
-}
+type MinioObjectMeta = {
+    fileName: string,
+    uniqueName: string,
+    buffer: Readable,
+};
 
-export { ArchiverQueueItem, PostgresqlFilesSelectResponse, ServiceConnector, MinioObjectCacheItem };
+type FileForArchive = {
+    fileName: string,
+    buffer: Readable | Buffer
+};
+
+// type ArchiveFileMeta = {
+//     fileName: string,
+//     buffer: 
+// }
+
+export { ArchiverQueueItem, PostgresqlFilesSelectResponse, MinioObjectMeta, Readable, FileForArchive, PostgresInsertMeta };

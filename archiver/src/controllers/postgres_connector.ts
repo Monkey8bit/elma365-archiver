@@ -1,5 +1,6 @@
 import * as CONFIG from "../config/config.js";
 import pg from "pg";
+import { PostgresInsertMeta } from "../types/types"
 
 class PostgresConnector {
     private client: pg.Pool;
@@ -14,8 +15,17 @@ class PostgresConnector {
         });
     };
 
-    async selectFiles(filesIds: number[]) {
-        const fileNames = await this.query(`SELECT name, unique_name FROM files WHERE id IN (${filesIds.join(",")})`);
+    async selectFiles(filesIds: number[]): Promise<string[]> {
+        const fileNames = await this.query(`SELECT unique_name FROM files WHERE id IN (${filesIds.join(",")})`);
+        return fileNames.map(obj => obj.unique_name);
+    };
+
+    async insertFile(fileMeta: PostgresInsertMeta): Promise<number> {
+        const queryPromise = await this.query(`INSERT INTO archives (name, s3_tag, user_id, unique_name) VALUES (${Object.keys(fileMeta).map(key => {
+            return `'${fileMeta[key as keyof typeof fileMeta]}'`
+        }).join(", ")}) RETURNING id`);
+        
+        return queryPromise.length > 0 ? queryPromise[0].id : 0;
     };
 
     private async query(query: string) {

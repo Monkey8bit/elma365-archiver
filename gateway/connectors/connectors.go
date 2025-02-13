@@ -36,7 +36,9 @@ type FileMeta struct {
 }
 
 type RabbitMQMessage struct {
-	FilesIds []int
+	FilesIds  []int
+	UserEmail string
+	UserId    int
 }
 
 func CreateMinioConnector(endpoint, accessKey, secretKey string) (*MinioConnector, error) {
@@ -54,26 +56,20 @@ func CreateMinioConnector(endpoint, accessKey, secretKey string) (*MinioConnecto
 }
 
 func (c *MinioConnector) UploadFile(ctx context.Context, bucketName string, file io.Reader, name string, fileSize int64, contentType string) (string, string, error) {
-	fileTag, uniqueName, err := c.checkFileExists(ctx, bucketName, name)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	if len(fileTag) > 0 {
-		return fileTag, uniqueName, nil
-	}
-
 	fileNameArray := strings.Split(name, ".")
-	fileName, fileExtension := strings.Join(fileNameArray[:len(fileNameArray)-1], "."), fileNameArray[len(fileNameArray)-1]
-	uniqueName = fmt.Sprintf("%s_%s.%s", fileName, uuid.New().String(), fileExtension)
+	uniqueName := ""
 
-	fmt.Printf("Uploading file %s with unique name %s\n", name, uniqueName)
+	if len(fileNameArray) > 1 {
+		fileName, fileExtension := strings.Join(fileNameArray[:len(fileNameArray)-1], "."), fileNameArray[len(fileNameArray)-1]
+		uniqueName = fmt.Sprintf("%s_%s.%s", fileName, uuid.New().String(), fileExtension)
+	} else {
+		uniqueName = fmt.Sprintf("%s_%s", name, uuid.New().String())
+	}
 
-	fileMeta, err := c.Client.PutObject(ctx, bucketName, name, file, fileSize, minio.PutObjectOptions{
+	fileMeta, err := c.Client.PutObject(ctx, bucketName, uniqueName, file, fileSize, minio.PutObjectOptions{
 		ContentType: contentType,
 		UserMetadata: map[string]string{
-			"unique_name": uniqueName,
+			"file_name": name,
 		},
 	})
 
@@ -82,20 +78,6 @@ func (c *MinioConnector) UploadFile(ctx context.Context, bucketName string, file
 	}
 
 	return fileMeta.ETag, uniqueName, nil
-}
-
-func (c *MinioConnector) checkFileExists(ctx context.Context, bucketName string, fileName string) (string, string, error) {
-	fileMeta, err := c.Client.StatObject(ctx, bucketName, fileName, minio.StatObjectOptions{})
-
-	if err != nil {
-		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
-			return "", "", nil
-		}
-
-		return "", "", err
-	}
-
-	return fileMeta.ETag, fileMeta.Metadata.Get("uniqueName"), nil
 }
 
 func CreatePostgresConnector(connString string) (*PostgresConnector, error) {
@@ -131,18 +113,6 @@ func (c *PostgresConnector) InsertFile(ctx context.Context, fileMeta FileMeta) (
 	var err error
 	var fileId int
 
-	err = c.Client.QueryRow(ctx, "SELECT id FROM files WHERE s3_tag = $1 AND name = $2", fileMeta.MinioTag, fileMeta.FileName).Scan(&fileId)
-
-	if err != nil && err != pgx.ErrNoRows {
-		log.Println(err)
-		return fileId, err
-	}
-
-	if fileId != 0 {
-		log.Printf("File %s with id %d already exists\n", fileMeta.FileName, fileId)
-		return fileId, nil
-	}
-
 	err = c.Client.QueryRow(ctx, "INSERT INTO files (name, s3_tag, user_id, unique_name) VALUES ($1, $2, $3, $4) RETURNING id", fileMeta.FileName, fileMeta.MinioTag, fileMeta.UserId, fileMeta.UniqueName).Scan(&fileId)
 
 	if err != nil {
@@ -165,7 +135,7 @@ func CreateRabbitMQConnector(connString string) (*RabbitMQConnector, error) {
 	return &RabbitMQConnector{Client: conn}, nil
 }
 
-func (c *RabbitMQConnector) PublishFilesIds(ctx context.Context, filesIds []int) error {
+func (c *RabbitMQConnector) PublishFilesIds(ctx context.Context, filesIds []int, userEmail string, userId int) error {
 	ch, err := c.Client.Channel()
 
 	if err != nil {
@@ -175,7 +145,7 @@ func (c *RabbitMQConnector) PublishFilesIds(ctx context.Context, filesIds []int)
 
 	defer ch.Close()
 
-	body, err := json.Marshal(RabbitMQMessage{FilesIds: filesIds})
+	body, err := json.Marshal(RabbitMQMessage{FilesIds: filesIds, UserEmail: userEmail, UserId: userId})
 
 	if err != nil {
 		log.Println(err)
