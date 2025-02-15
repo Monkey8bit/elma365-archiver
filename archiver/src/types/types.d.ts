@@ -1,7 +1,7 @@
-import { Readable } from "node:stream"
+import { Readable } from "node:stream";
 
 type ArchiverQueueItem = {
-    FilesIds: number[],
+    FilesIds: number[] | number,
     UserEmail: string,
     UserId: number
 };
@@ -17,6 +17,7 @@ type PostgresInsertMeta = {
     uniqueName: string
 };
 
+
 type MinioObjectMeta = {
     fileName: string,
     uniqueName: string,
@@ -28,9 +29,5 @@ type FileForArchive = {
     buffer: Readable | Buffer
 };
 
-// type ArchiveFileMeta = {
-//     fileName: string,
-//     buffer: 
-// }
 
 export { ArchiverQueueItem, PostgresqlFilesSelectResponse, MinioObjectMeta, Readable, FileForArchive, PostgresInsertMeta };

@@ -55,7 +55,7 @@ func CreateMinioConnector(endpoint, accessKey, secretKey string) (*MinioConnecto
 	return &MinioConnector{Client: client}, nil
 }
 
-func (c *MinioConnector) UploadFile(ctx context.Context, bucketName string, file io.Reader, name string, fileSize int64, contentType string) (string, string, error) {
+func (c *MinioConnector) UploadFile(ctx context.Context, bucketName string, file io.Reader, name string, fileSize int64, contentType string, userEmail string) (string, string, error) {
 	fileNameArray := strings.Split(name, ".")
 	uniqueName := ""
 
@@ -66,7 +66,7 @@ func (c *MinioConnector) UploadFile(ctx context.Context, bucketName string, file
 		uniqueName = fmt.Sprintf("%s_%s", name, uuid.New().String())
 	}
 
-	fileMeta, err := c.Client.PutObject(ctx, bucketName, uniqueName, file, fileSize, minio.PutObjectOptions{
+	fileMeta, err := c.Client.PutObject(ctx, bucketName, fmt.Sprintf("%s/%s", userEmail, uniqueName), file, fileSize, minio.PutObjectOptions{
 		ContentType: contentType,
 		UserMetadata: map[string]string{
 			"file_name": name,

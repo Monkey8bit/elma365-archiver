@@ -16,25 +16,18 @@ class PostgresConnector {
     };
 
     async selectFiles(filesIds: number[]): Promise<string[]> {
-        const fileNames = await this.query(`SELECT unique_name FROM files WHERE id IN (${filesIds.join(",")})`);
-        return fileNames.map(obj => obj.unique_name);
+        const shieldedArray = filesIds.map((_, i) => `$${++i}`).join(", ");
+        const query = `SELECT unique_name FROM files WHERE id IN (${shieldedArray})`;
+        const queryResult = await this.client.query<{unique_name: string}>(query, filesIds);
+        return queryResult.rows.map(row => row.unique_name);
     };
 
     async insertFile(fileMeta: PostgresInsertMeta): Promise<number> {
-        const queryPromise = await this.query(`INSERT INTO archives (name, s3_tag, user_id, unique_name) VALUES (${Object.keys(fileMeta).map(key => {
-            return `'${fileMeta[key as keyof typeof fileMeta]}'`
-        }).join(", ")}) RETURNING id`);
+        const query = "INSERT INTO files (name, s3_tag, user_id, unique_name) VALUES ($1::VARCHAR, $2::VARCHAR, $3::INT, $4::VARCHAR) RETURNING id";
+        const queryResult = await this.client.query(query, [fileMeta.uniqueName, fileMeta.fileTag, fileMeta.userId, fileMeta.uniqueName]);
         
-        return queryPromise.length > 0 ? queryPromise[0].id : 0;
-    };
-
-    private async query(query: string) {
-        return this.client.query(query).then(res => {
-            return res.rows;
-        }).catch(err => {
-            throw new Error(err.message);
-        });
+        return queryResult.rows.length > 0 ? queryResult.rows[0].id : 0;
     };
 };
 
-export const postgresConnector = new PostgresConnector();
+export default new PostgresConnector();

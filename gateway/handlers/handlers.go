@@ -42,9 +42,9 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	files := r.MultipartForm.File["files"]
-	mail := r.FormValue("mail")
+	userEmail := r.FormValue("mail")
 
-	if len(mail) == 0 {
+	if len(userEmail) == 0 {
 		json.NewEncoder(w).Encode(Response{Message: "Mail is required", Status: http.StatusBadRequest})
 		return
 	}
@@ -68,7 +68,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		wg.Add(1)
-		go serializeFile(file, fileHeader.Filename, fileHeader.Size, &wg, connector, fileStatuses)
+		go serializeFile(file, fileHeader.Filename, fileHeader.Size, &wg, connector, fileStatuses, userEmail)
 	}
 
 	go func() {
@@ -84,7 +84,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := postgresConnector.GetOrCreateUser(context.Background(), mail)
+	userId, err := postgresConnector.GetOrCreateUser(context.Background(), userEmail)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(Response{Message: "Unable to get or create user", Status: http.StatusInternalServerError})
@@ -121,7 +121,7 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = rabbitmqConnector.PublishFilesIds(context.Background(), filesIds, mail, userId)
+	err = rabbitmqConnector.PublishFilesIds(context.Background(), filesIds, userEmail, userId)
 
 	if err != nil {
 		json.NewEncoder(w).Encode(Response{Message: "Unable to publish files ids", Status: http.StatusInternalServerError})
@@ -131,11 +131,11 @@ func UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Response{Message: "Files uploaded", Status: http.StatusOK})
 }
 
-func serializeFile(file multipart.File, fileName string, fileSize int64, wg *sync.WaitGroup, connector *connectors.MinioConnector, ch chan FileValidationMeta) {
+func serializeFile(file multipart.File, fileName string, fileSize int64, wg *sync.WaitGroup, connector *connectors.MinioConnector, ch chan FileValidationMeta, userEmail string) {
 	defer file.Close()
 	defer wg.Done()
 
-	fileTag, uniqueName, err := connector.UploadFile(context.Background(), filesBucketName, file, fileName, fileSize, "application/octet-stream")
+	fileTag, uniqueName, err := connector.UploadFile(context.Background(), filesBucketName, file, fileName, fileSize, "application/octet-stream", userEmail)
 
 	if err != nil {
 		ch <- FileValidationMeta{FileName: fileName, FileTag: "", Status: false}

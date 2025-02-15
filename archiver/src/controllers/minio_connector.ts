@@ -48,13 +48,13 @@ class MinioConnector {
         };
     };
 
-    async getFiles(bucketName: string, minioFilesNames: string[]) {
-        const files = await Promise.all(minioFilesNames.map(fileName => this.getFile(bucketName, fileName))).then(data => data.filter(Boolean));
-        console.log({files})
-        return files.filter(file => file!.buffer !== null);
+    async getFiles(bucketName: string, minioFilesNames: string[], userEmail: string): Promise<MinioObjectMeta[]> {
+        const files = await Promise.all(minioFilesNames.map(fileName => this.getFile(bucketName, `${userEmail}/${fileName}`))).then(data => data.filter(Boolean));
+        // filter for get rid of undefined values, map for typechecking
+        return files.filter(file => file && file.buffer !== null).map(file => file!);
     };
     
-    async uploadFile(bucketName: string, name: string, fileBuffer: Buffer): Promise<string | undefined> {
+    async uploadFile(bucketName: string, name: string, fileBuffer: Buffer, userMail: string): Promise<string | undefined> {
         const fileNameArr = name.split(".");
         let uniqueName = "";
 
@@ -65,7 +65,7 @@ class MinioConnector {
             uniqueName = name;
         };
 
-        return this.client.putObject(bucketName, uniqueName, fileBuffer, fileBuffer.length, {file_name: name}).then(res => {
+        return this.client.putObject(bucketName, `${userMail}/${uniqueName}`, fileBuffer, fileBuffer.length, {file_name: name}).then(res => {
             return res.etag;
         }).catch(err => {
             console.error(err);
@@ -74,4 +74,4 @@ class MinioConnector {
     };
 };
 
-export { MinioConnector };
+export default new MinioConnector();
