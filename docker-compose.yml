@@ -136,8 +136,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - ${MINIO_PROXY_PORT}:80
+    volumes:
+      - ./compose_conf/certbot:/etc/ssl/certs
     environment:
       - MINIO_HOST=${MINIO_HOST}
       - MINIO_PORT=${MINIO_PORT}
       - MINIO_PROTOCOL=${MINIO_PROTOCOL}
     command: /bin/sh -c "env && envsubst '$$MINIO_HOST, $$MINIO_PORT, $$MINIO_PROTOCOL' < '/etc/nginx/conf.d/default.conf.template' > '/etc/nginx/conf.d/default.conf' && nginx -g 'daemon off;'"
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./compose_conf/certbot:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'certbot certonly --standalone --preferred-challenges http -d ${DOMAIN_NAME} && cp -r /etc/letsencrypt/* /etc/letsencrypt/live/${DOMAIN_NAME}/ /etc/letsencryps/'"

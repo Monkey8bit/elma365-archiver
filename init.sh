@@ -16,6 +16,10 @@
 # 	echo "token exists"
 # fi
 
+if [ -z "$( ls -A '/path/to/dir' )" ]; then
+	docker compose run -it --build certbot
+fi
+
 
 while getopts f OPT 
 do
