@@ -4,7 +4,7 @@ import minioConnector from './src/controllers/minio_connector';
 import postgresConnector from './src/controllers/postgres_connector';
 import archiveFiles from "./src/utils/archiver"
 
-import { ArchiverQueueItem, FileForArchive, MinioObjectMeta } from './src/types/types';
+import { ArchiverQueueItem, FileForArchive, MinioObjectMeta, MailerQueueItem } from './src/types/types';
 
 (async () => {
     console.log(`Node init, waiting for messages...`);
@@ -75,8 +75,7 @@ import { ArchiverQueueItem, FileForArchive, MinioObjectMeta } from './src/types/
 
             await rabbitmqConnector.sendMessage({
                 UserEmail: content.UserEmail,
-                UserId: content.UserId,
-                FilesIds: fileId
+                FileId: fileId
             });
         };
     });

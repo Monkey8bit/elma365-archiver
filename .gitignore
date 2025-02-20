@@ -2,3 +2,4 @@
 node_modules
 compose_conf
 dist
+jwt.json

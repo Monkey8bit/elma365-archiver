@@ -6,6 +6,11 @@ type ArchiverQueueItem = {
     UserId: number
 };
 
+type MailerQueueItem = {
+    FileId: number,
+    UserEmail: string,
+}
+
 type PostgresqlFilesSelectResponse = {
     fileNames: string[]
 };
@@ -30,4 +35,4 @@ type FileForArchive = {
 };
 
 
-export { ArchiverQueueItem, PostgresqlFilesSelectResponse, MinioObjectMeta, Readable, FileForArchive, PostgresInsertMeta };
+export { ArchiverQueueItem, PostgresqlFilesSelectResponse, MinioObjectMeta, Readable, FileForArchive, PostgresInsertMeta, MailerQueueItem };

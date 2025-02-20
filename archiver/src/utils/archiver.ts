@@ -12,7 +12,7 @@ export default async function archiveFiles(files: FileForArchive[], userEmail: s
     
         return zip.generateAsync({type: "nodebuffer"}).then(data => {
             return {
-                fileName: `archive_${crypto.randomUUID()} (${userEmail}).zip`,
+                fileName: `archive_${crypto.randomUUID()}.zip`,
                 buffer: data
             }
         });
