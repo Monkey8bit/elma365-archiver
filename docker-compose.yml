@@ -141,3 +141,4 @@ services:
       - MINIO_PORT=${MINIO_PORT}
       - MINIO_PROTOCOL=${MINIO_PROTOCOL}
     command: /bin/sh -c "env && envsubst '$$MINIO_HOST, $$MINIO_PORT, $$MINIO_PROTOCOL' < '/etc/nginx/conf.d/default.conf.template' > '/etc/nginx/conf.d/default.conf' && nginx -g 'daemon off;'"
+    restart: always
